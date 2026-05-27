@@ -171,6 +171,26 @@ describe('ProcessManager', () => {
       );
     });
 
+    it('should prepend executableArgs before GakrCLI runtime flags', () => {
+      manager = new ProcessManager({
+        cwd: '/tmp/test-project',
+        executable: process.execPath,
+        executableArgs: ['/repo/dist/cli.mjs'],
+        model: 'gpt-4o',
+      });
+
+      manager.spawn();
+
+      expect(mockSpawn).toHaveBeenCalledWith(
+        process.execPath,
+        expect.arrayContaining(['/repo/dist/cli.mjs', '--model', 'gpt-4o']),
+        expect.any(Object),
+      );
+      const args = mockSpawn.mock.calls[0]?.[1] as string[];
+      expect(args[0]).toBe('/repo/dist/cli.mjs');
+      expect(args.indexOf('--print')).toBeGreaterThan(0);
+    });
+
     it('should pass --permission-mode flag when permissionMode is specified', () => {
       manager = new ProcessManager({
         cwd: '/tmp/test-project',

@@ -36,6 +36,8 @@ export interface ProcessManagerOptions {
   cwd: string;
   /** Path to the gakrcli executable (default: 'gakrcli') */
   executable?: string;
+  /** Arguments that must appear before the GakrCLI runtime flags, e.g. dist/cli.mjs for node. */
+  executableArgs?: string[];
   /** Model to use */
   model?: string;
   /** Permission mode */
@@ -187,7 +189,7 @@ export class ProcessManager {
     this.setState(ProcessState.Spawning);
 
     const executable = (this.options.executable ?? 'gakrcli').trim() || 'gakrcli';
-    const args = this.buildArgs();
+    const args = [...(this.options.executableArgs ?? []), ...this.buildArgs()];
     const env = this.buildEnv();
     const spawnCommand = resolveSpawnCommand(executable, args);
 

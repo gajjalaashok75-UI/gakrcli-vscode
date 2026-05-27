@@ -1,5 +1,8 @@
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
-import { resolveCliExecutable } from '../../src/settings/cliExecutable';
+import { resolveCliExecutable, resolveCliLaunchCommand } from '../../src/settings/cliExecutable';
 
 describe('resolveCliExecutable', () => {
   it('uses the GakrCLI wrapper setting', () => {
@@ -27,5 +30,32 @@ describe('resolveCliExecutable', () => {
     };
 
     expect(resolveCliExecutable(config)).toBe('gakrcli');
+  });
+
+  it('uses the local source-built CLI when the workspace is the GakrCLI repo', () => {
+    const workspace = join(tmpdir(), `gakrcli-vscode-cli-${Date.now()}`);
+    mkdirSync(join(workspace, 'dist'), { recursive: true });
+    writeFileSync(join(workspace, 'dist', 'cli.mjs'), '');
+    writeFileSync(
+      join(workspace, 'package.json'),
+      JSON.stringify({
+        name: '@gakr-gakr/gakrcli',
+        bin: { gakrcli: 'bin/gakrcli.js' },
+      }),
+    );
+
+    try {
+      const config = {
+        get: (_key: string, defaultValue?: string) => defaultValue,
+      };
+
+      const launch = resolveCliLaunchCommand(config, workspace);
+
+      expect(launch.executable).toBe(process.execPath);
+      expect(launch.args).toEqual([join(workspace, 'dist', 'cli.mjs')]);
+      expect(launch.displayCommand).toContain('cli.mjs');
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
   });
 });
