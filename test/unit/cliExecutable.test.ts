@@ -24,6 +24,17 @@ describe('resolveCliExecutable', () => {
     expect(resolveCliExecutable(config)).toBe('C:\\Tools\\gakrcli.cmd');
   });
 
+  it('parses a configured wrapper with launch arguments', () => {
+    const config = {
+      get: (_key: string, _defaultValue?: string) => 'node "C:\\Tools\\Gakr CLI\\dist\\cli.mjs"',
+    };
+
+    const launch = resolveCliLaunchCommand(config);
+
+    expect(launch.executable).toBe('node');
+    expect(launch.args).toEqual(['C:\\Tools\\Gakr CLI\\dist\\cli.mjs']);
+  });
+
   it('falls back to gakrcli when the wrapper is empty', () => {
     const config = {
       get: (_key: string, _defaultValue?: string) => '   ',
@@ -51,7 +62,7 @@ describe('resolveCliExecutable', () => {
 
       const launch = resolveCliLaunchCommand(config, workspace);
 
-      expect(launch.executable).toBe(process.execPath);
+      expect(launch.executable).toBe('node');
       expect(launch.args).toEqual([join(workspace, 'dist', 'cli.mjs')]);
       expect(launch.displayCommand).toContain('cli.mjs');
     } finally {

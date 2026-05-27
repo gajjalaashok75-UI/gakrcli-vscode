@@ -22,10 +22,11 @@ export function resolveCliLaunchCommand(
 ): CliLaunchCommand {
   const wrapper = config.get<string>('processWrapper', '')?.trim();
   if (wrapper) {
+    const parsed = parseCommandLine(wrapper);
     return {
-      executable: wrapper,
-      args: [],
-      displayCommand: quoteShellToken(wrapper),
+      executable: parsed.executable,
+      args: parsed.args,
+      displayCommand: parsed.displayCommand,
     };
   }
 
@@ -34,9 +35,9 @@ export function resolveCliLaunchCommand(
     : undefined;
   if (localCli) {
     return {
-      executable: process.execPath,
+      executable: 'node',
       args: [localCli],
-      displayCommand: [process.execPath, localCli].map(quoteShellToken).join(' '),
+      displayCommand: ['node', localCli].map(quoteShellToken).join(' '),
     };
   }
 
@@ -70,6 +71,50 @@ function resolveLocalSourceCli(workspaceFolder: string): string | undefined {
   }
 
   return undefined;
+}
+
+function parseCommandLine(commandLine: string): CliLaunchCommand {
+  const tokens: string[] = [];
+  let current = '';
+  let quote: '"' | "'" | undefined;
+
+  for (let i = 0; i < commandLine.length; i++) {
+    const char = commandLine[i]!;
+    if (quote) {
+      if (char === quote) {
+        quote = undefined;
+      } else {
+        current += char;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (/\s/.test(char)) {
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current) {
+    tokens.push(current);
+  }
+
+  const [executable = DEFAULT_CLI_EXECUTABLE, ...args] = tokens;
+  return {
+    executable,
+    args,
+    displayCommand: tokens.map(quoteShellToken).join(' '),
+  };
 }
 
 function quoteShellToken(value: string): string {

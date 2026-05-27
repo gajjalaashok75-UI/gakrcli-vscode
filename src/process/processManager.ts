@@ -143,6 +143,8 @@ export class ProcessManager {
     | undefined;
   private pendingInitReject: ((error: Error) => void) | undefined;
   private initRequestId: string | undefined;
+  private initTimer: ReturnType<typeof setTimeout> | undefined;
+  private intentionalShutdown = false;
 
   // Callbacks
   private messageCallbacks: MessageCallback[] = [];
@@ -187,6 +189,7 @@ export class ProcessManager {
     }
 
     this.setState(ProcessState.Spawning);
+    this.intentionalShutdown = false;
 
     const executable = (this.options.executable ?? 'gakrcli').trim() || 'gakrcli';
     const args = [...(this.options.executableArgs ?? []), ...this.buildArgs()];
@@ -246,14 +249,17 @@ export class ProcessManager {
     this.process.on('error', (err) => {
       this.setState(ProcessState.Idle);
       this.emitError(err);
-      if (this.pendingInitReject) {
-        this.pendingInitReject(err);
-        this.pendingInitResolve = undefined;
-        this.pendingInitReject = undefined;
-      }
+      this.rejectPendingInitialize(err);
     });
 
     this.process.on('exit', (code, signal) => {
+      if (this.intentionalShutdown) {
+        this.clearPendingInitialize();
+      } else {
+        this.rejectPendingInitialize(
+          new Error(`GakrCLI exited before initialize completed: code=${code}, signal=${signal}`),
+        );
+      }
       this.cleanup();
       this.setState(ProcessState.Idle);
 
@@ -328,6 +334,9 @@ export class ProcessManager {
    */
   kill(signal: NodeJS.Signals = 'SIGTERM'): void {
     if (this.process && !this.process.killed) {
+      if (this.pendingInitReject) {
+        this.intentionalShutdown = true;
+      }
       this.process.kill(signal);
     }
   }
@@ -336,6 +345,7 @@ export class ProcessManager {
    * Clean up all resources.
    */
   dispose(): void {
+    this.intentionalShutdown = true;
     this.stopKeepAlive();
     this.kill();
     this.transport?.dispose();
@@ -469,6 +479,11 @@ export class ProcessManager {
       };
 
       this.transport?.write(initRequest);
+      this.initTimer = setTimeout(() => {
+        this.rejectPendingInitialize(
+          new Error('GakrCLI did not respond to initialize within 15000ms'),
+        );
+      }, 15_000);
     });
   }
 
@@ -480,6 +495,7 @@ export class ProcessManager {
 
       // Check if this is the initialize response
       if (requestId === this.initRequestId && this.pendingInitResolve) {
+        this.clearInitializeTimer();
         if (response.subtype === 'success') {
           const initResponse = response.response as unknown as InitializeResponse;
           this._initializeResponse = initResponse;
@@ -560,6 +576,31 @@ export class ProcessManager {
     }
   }
 
+  private clearInitializeTimer(): void {
+    if (this.initTimer) {
+      clearTimeout(this.initTimer);
+      this.initTimer = undefined;
+    }
+  }
+
+  private rejectPendingInitialize(error: Error): void {
+    if (!this.pendingInitReject) {
+      return;
+    }
+    this.clearInitializeTimer();
+    this.pendingInitReject(error);
+    this.pendingInitResolve = undefined;
+    this.pendingInitReject = undefined;
+    this.initRequestId = undefined;
+  }
+
+  private clearPendingInitialize(): void {
+    this.clearInitializeTimer();
+    this.pendingInitResolve = undefined;
+    this.pendingInitReject = undefined;
+    this.initRequestId = undefined;
+  }
+
   private restartWithResume(): void {
     this.setState(ProcessState.Restarting);
 
@@ -576,6 +617,7 @@ export class ProcessManager {
 
   private cleanup(): void {
     this.stopKeepAlive();
+    this.clearInitializeTimer();
     this.transport?.dispose();
     this.transport = undefined;
     this.router?.dispose();

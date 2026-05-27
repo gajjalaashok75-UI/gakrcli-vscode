@@ -368,7 +368,7 @@ describe('ProcessManager', () => {
       const exitFn = vi.fn();
       manager.onExit(exitFn);
 
-      manager.spawn();
+      void (manager.spawn() as Promise<unknown>)?.catch(() => {});
       mockProc.emit('exit', 0, null);
 
       await new Promise((r) => setTimeout(r, 10));
@@ -387,6 +387,15 @@ describe('ProcessManager', () => {
       await new Promise((r) => setTimeout(r, 10));
       expect(errorFn).toHaveBeenCalledWith(
         expect.objectContaining({ message: expect.stringContaining('ENOENT') }),
+      );
+    });
+
+    it('rejects initialize when the process exits before responding', async () => {
+      const spawnPromise = manager.spawn() as Promise<unknown>;
+      mockProc.emit('exit', 1, null);
+
+      await expect(spawnPromise).rejects.toThrow(
+        'GakrCLI exited before initialize completed',
       );
     });
 
