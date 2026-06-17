@@ -90,7 +90,7 @@ suite('gakrcli Extension Integration Tests', () => {
 
   suiteSetup(async () => {
     // Wait for extension to activate
-    const ext = vscode.extensions.getExtension('Harsh1210.gakrcli-vscode');
+    const ext = vscode.extensions.getExtension('gajjalaashok75-UI.gakrcli-vscode');
     if (ext && !ext.isActive) {
       await ext.activate();
     }
@@ -99,7 +99,7 @@ suite('gakrcli Extension Integration Tests', () => {
   });
 
   test('Extension is present and activates', () => {
-    const ext = vscode.extensions.getExtension('Harsh1210.gakrcli-vscode');
+    const ext = vscode.extensions.getExtension('gajjalaashok75-UI.gakrcli-vscode');
     assert.ok(ext, 'Extension should be installed');
     assert.ok(ext!.isActive, 'Extension should be active');
   });
@@ -174,7 +174,7 @@ suite('gakrcli Extension Integration Tests', () => {
     this.timeout(5000); // 5 second overall timeout
 
     const start = Date.now();
-    const ext = vscode.extensions.getExtension('Harsh1210.gakrcli-vscode');
+    const ext = vscode.extensions.getExtension('gajjalaashok75-UI.gakrcli-vscode');
     if (ext && !ext.isActive) {
       await ext.activate();
     }
@@ -554,7 +554,7 @@ AI coding assistant for VS Code powered by any LLM — GPT-4o, Gemini, DeepSeek,
 
 ### From .vsix
 
-1. Download the latest `.vsix` from [Releases](https://github.com/Harsh1210/gakrcli-vscode/releases)
+1. Download the latest `.vsix` from [Releases](https://github.com/gajjalaashok75-UI/gakrcli-vscode/releases)
 2. In VS Code: Extensions > ... > Install from VSIX
 3. Select the downloaded file
 

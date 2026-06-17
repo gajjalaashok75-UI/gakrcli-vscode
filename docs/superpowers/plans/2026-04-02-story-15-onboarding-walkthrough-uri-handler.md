@@ -56,7 +56,7 @@ git commit -m "feat(onboarding): add onboarding checklist and finalize walkthrou
 - Test: `test/unit/uriHandler.test.ts` (if using a pure parser helper)
 
 - [ ] **Step 1: Write failing tests for URI parsing if you extract a helper**
-- [ ] **Step 2: Register a `vscode.UriHandler` for `vscode://harsh1210.gakrcli-vscode/open?...`**
+- [ ] **Step 2: Register a `vscode.UriHandler` for `vscode://gajjalaashok75-UI.gakrcli-vscode/open?...`**
 - [ ] **Step 3: Support at least `prompt` and `session` query parameters and route them into the existing open/new-session flow**
 - [ ] **Step 4: Fail gracefully on unknown/malformed URIs with a visible message**
 - [ ] **Step 5: Run `npm run build` and manually test a URI launch**
@@ -91,4 +91,4 @@ git commit -m "chore(schema): align settings schema contributions"
 
 - [ ] Run: `npm run build`
 - [ ] Manual: verify onboarding checklist visibility and dismiss behavior
-- [ ] Manual: open a `vscode://harsh1210.gakrcli-vscode/open?...` URI and confirm it routes correctly
+- [ ] Manual: open a `vscode://gajjalaashok75-UI.gakrcli-vscode/open?...` URI and confirm it routes correctly

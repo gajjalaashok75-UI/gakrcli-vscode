@@ -64,7 +64,7 @@ Create `package.json` with these changes from the original:
 |---|---|
 | `"name": "claude-code"` | `"name": "gakrcli-vscode"` |
 | `"displayName": "Claude Code for VS Code"` | `"displayName": "gakrcli VS Code"` |
-| `"publisher": "Anthropic"` | `"publisher": "Harsh1210"` |
+| `"publisher": "Anthropic"` | `"publisher": "gajjalaashok75-UI"` |
 | `"description": "Claude Code for VS Code: ..."` | `"description": "gakrcli VS Code: AI coding assistant powered by any LLM"` |
 | `"version": "2.1.85"` | `"version": "0.1.0"` |
 | All `claude-vscode.*` commands | `gakrcli.*` commands |

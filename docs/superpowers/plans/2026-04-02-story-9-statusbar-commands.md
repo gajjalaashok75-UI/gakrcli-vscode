@@ -484,7 +484,7 @@ export class CommandRegistry implements vscode.Disposable {
     this.register('gakrcli.openWalkthrough', () => {
       vscode.commands.executeCommand(
         'workbench.action.openWalkthrough',
-        'Harsh1210.gakrcli-vscode#gakrcli-walkthrough',
+        'gajjalaashok75-UI.gakrcli-vscode#gakrcli-walkthrough',
         false,
       );
     });

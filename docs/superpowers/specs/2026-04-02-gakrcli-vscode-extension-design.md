@@ -1,10 +1,10 @@
 # gakrcli VS Code Extension — Design Specification
 
 **Date:** 2026-04-02
-**Author:** Harsh Agarwal + Claude
+**Author:** gajjalaashok75-UI + Claude
 **Status:** Approved
-**Repo:** github.com/Harsh1210/gakrcli-vscode
-**Extension ID:** `harsh1210.gakrcli-vscode`
+**Repo:** github.com/gajjalaashok75-UI/gakrcli-vscode
+**Extension ID:** `gajjalaashok75-UI.gakrcli-vscode`
 **Display Name:** gakrcli VS Code
 
 ---
@@ -679,7 +679,7 @@ Claude can ask structured questions during tool execution:
 | Keyboard shortcuts | Low | Declarative in package.json |
 | Auto-save before read/write | Low | `document.save()` on tool_use events |
 | Python env activation | Low | Python extension API |
-| URI handler | Low | `vscode://harsh1210.gakrcli-vscode/open` |
+| URI handler | Low | `vscode://gajjalaashok75-UI.gakrcli-vscode/open` |
 | Drag-and-drop attachments | Low | Webview DragEvent handler |
 | Jupyter cell execution | Low | Notebook API + confirmation QuickPick |
 | Feedback survey | Low | Configurable probability dialog |
@@ -1178,7 +1178,7 @@ Each story is scoped to be completable in **one session** (~2-4 hours of focused
 - [ ] OnboardingChecklist appears on first open
 - [ ] Dismissable via `gakrcliCode.hideOnboarding` setting
 - [ ] Walkthrough step markdown files with screenshots
-- [ ] URI handler: `vscode://harsh1210.gakrcli-vscode/open?prompt=...&session=...`
+- [ ] URI handler: `vscode://gajjalaashok75-UI.gakrcli-vscode/open?prompt=...&session=...`
 - [ ] JSON schema validation for `.claude/settings.json` and `.claude/settings.local.json`
 - [ ] Settings schema file contributed
 

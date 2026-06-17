@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Complete the onboarding experience with a 4-step walkthrough in package.json, an in-webview OnboardingChecklist on first open, a URI handler for deep links (`vscode://harsh1210.gakrcli-vscode/open?prompt=...&session=...`), and JSON schema validation for `.claude/settings.json`.
+**Goal:** Complete the onboarding experience with a 4-step walkthrough in package.json, an in-webview OnboardingChecklist on first open, a URI handler for deep links (`vscode://gajjalaashok75-UI.gakrcli-vscode/open?prompt=...&session=...`), and JSON schema validation for `.claude/settings.json`.
 
 **Architecture:** The walkthrough is declarative (package.json `contributes.walkthroughs`). The OnboardingChecklist is a React component shown on first open when `gakrcliCode.hideOnboarding` is false. The URI handler is a VS Code `UriHandler` registered during activation that parses query params and routes to session open/prompt flows. The settings schema is a JSON file contributed via `contributes.jsonValidation`.
 
@@ -513,7 +513,7 @@ export class gakrcliUriHandler implements vscode.UriHandler {
 
   /**
    * Called by VS Code when a URI like
-   * vscode://harsh1210.gakrcli-vscode/open?prompt=...&session=...
+   * vscode://gajjalaashok75-UI.gakrcli-vscode/open?prompt=...&session=...
    * is opened.
    */
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
@@ -524,7 +524,7 @@ export class gakrcliUriHandler implements vscode.UriHandler {
 
     if (parsed.action === 'unknown') {
       vscode.window.showWarningMessage(
-        `gakrcli: ${parsed.error || 'Unrecognized URI'}. Expected: vscode://harsh1210.gakrcli-vscode/open?prompt=...`,
+        `gakrcli: ${parsed.error || 'Unrecognized URI'}. Expected: vscode://gajjalaashok75-UI.gakrcli-vscode/open?prompt=...`,
       );
       return;
     }
@@ -1120,7 +1120,7 @@ function handleOnboardingMessages(message: { type: string; [key: string]: unknow
     case 'onboarding_open_walkthrough':
       vscode.commands.executeCommand(
         'workbench.action.openWalkthrough',
-        'Harsh1210.gakrcli-vscode#gakrcli-walkthrough',
+        'gajjalaashok75-UI.gakrcli-vscode#gakrcli-walkthrough',
         false,
       );
       break;
@@ -1144,7 +1144,7 @@ function handleOnboardingMessages(message: { type: string; [key: string]: unknow
 const openWalkthroughCmd = vscode.commands.registerCommand('gakrcli.openWalkthrough', () => {
   vscode.commands.executeCommand(
     'workbench.action.openWalkthrough',
-    'Harsh1210.gakrcli-vscode#gakrcli-walkthrough',
+    'gajjalaashok75-UI.gakrcli-vscode#gakrcli-walkthrough',
     false,
   );
 });
@@ -1173,7 +1173,7 @@ git commit -m "feat(onboarding): wire URI handler, onboarding visibility, and wa
 - [ ] Manual: F5 launch → verify walkthrough appears under "Get Started" (Help > Get Started)
 - [ ] Manual: verify OnboardingChecklist shows on first open
 - [ ] Manual: click dismiss → verify `gakrcliCode.hideOnboarding` is set to true
-- [ ] Manual: test URI: open terminal, run `code --open-url "vscode://harsh1210.gakrcli-vscode/open?prompt=hello"` → verify gakrcli opens with "hello" prefilled
-- [ ] Manual: test URI with session: `code --open-url "vscode://harsh1210.gakrcli-vscode/open?session=abc-123"` → verify resume attempt
+- [ ] Manual: test URI: open terminal, run `code --open-url "vscode://gajjalaashok75-UI.gakrcli-vscode/open?prompt=hello"` → verify gakrcli opens with "hello" prefilled
+- [ ] Manual: test URI with session: `code --open-url "vscode://gajjalaashok75-UI.gakrcli-vscode/open?session=abc-123"` → verify resume attempt
 - [ ] Manual: open any `.claude/settings.json` file → verify autocomplete and validation from the schema
 - [ ] Manual: verify invalid properties show warnings in `.claude/settings.json`
