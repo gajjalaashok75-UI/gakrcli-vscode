@@ -10,7 +10,7 @@ vi.mock('node:child_process', () => ({
 }));
 
 // Import after mocking
-import { ProcessManager, ProcessState } from '../../src/process/processManager';
+import { ProcessManager, ProcessState, INIT_TIMEOUT_MS } from '../../src/process/processManager';
 
 const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
 const originalComSpec = process.env.ComSpec;
@@ -113,6 +113,7 @@ describe('ProcessManager', () => {
           'stream-json',
           '--input-format',
           'stream-json',
+          '--print',
           '--verbose',
         ]),
         expect.objectContaining({
@@ -168,6 +169,33 @@ describe('ProcessManager', () => {
         expect.arrayContaining(['--model', 'gpt-4o']),
         expect.any(Object),
       );
+    });
+
+    it('should not pass --provider flag even when provider is specified (CLI uses own config)', () => {
+      manager = new ProcessManager({
+        cwd: '/tmp/test-project',
+        executable: 'gakrcli',
+        provider: 'anthropic',
+      });
+
+      manager.spawn();
+
+      const callArgs = mockSpawn.mock.calls[0][1] as string[];
+      expect(callArgs).not.toContain('--provider');
+    });
+
+    it('should pass --model flag when model is specified', () => {
+      manager = new ProcessManager({
+        cwd: '/tmp/test-project',
+        executable: 'gakrcli',
+        model: 'gemini-2.0-flash',
+      });
+
+      manager.spawn();
+
+      const callArgs = mockSpawn.mock.calls[0][1] as string[];
+      expect(callArgs).toContain('--model');
+      expect(callArgs).toContain('gemini-2.0-flash');
     });
 
     it('should pass --permission-mode flag when permissionMode is specified', () => {
@@ -270,7 +298,7 @@ describe('ProcessManager', () => {
           '/d',
           '/s',
           '/c',
-          '"C:\\Users\\Test User\\AppData\\Roaming\\npm\\gakrcli.cmd" --output-format stream-json --verbose --input-format stream-json',
+          '"C:\\Users\\Test User\\AppData\\Roaming\\npm\\gakrcli.cmd" --output-format stream-json --input-format stream-json --print --verbose',
         ],
         expect.objectContaining({
           cwd: 'C:\\work\\project',
@@ -371,6 +399,38 @@ describe('ProcessManager', () => {
 
       expect(mockProc.kill).toHaveBeenCalled();
       expect(manager.state).toBe(ProcessState.Idle);
+    });
+  });
+
+  describe('spawn timing', () => {
+    it('should return 0 before spawn is called', () => {
+      const pm = new ProcessManager({ cwd: '/tmp', executable: 'gakrcli' });
+      expect(pm.getSpawnElapsedMs()).toBe(0);
+    });
+
+    it('should return positive value after spawn is called', () => {
+      manager.spawn();
+      expect(manager.getSpawnElapsedMs()).toBeGreaterThan(0);
+    });
+  });
+
+  describe('init timeout', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should reject spawn promise when init handshake times out', async () => {
+      const spawnPromise = manager.spawn() as Promise<unknown>;
+      spawnPromise.catch(() => {}); // Suppress unhandled rejection (expect().rejects catches it below)
+
+      // Don't send any init response — advance past the timeout
+      await vi.advanceTimersByTimeAsync(INIT_TIMEOUT_MS + 1000);
+
+      await expect(spawnPromise).rejects.toThrow('timed out');
     });
   });
 });
