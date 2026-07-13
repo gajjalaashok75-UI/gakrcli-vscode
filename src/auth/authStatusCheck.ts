@@ -1,23 +1,17 @@
 // src/auth/authStatusCheck.ts
 //
 // Checks whether the user is logged into gakrcli by shelling out to
-// `gakrcli auth status --json` (documented in docs/gakrcli-subarguments.md as
-// a real subcommand: "auth status — Show authentication status", with
-// `--json` as the default output format).
-//
-// IMPORTANT — this is a best-effort parse. I have not seen a real example of
-// `gakrcli auth status --json`'s exact output shape, so this checks several
-// plausible field names defensively and fails *silently* (treats status as
-// "unknown", shows nothing) rather than risk a false "you're not logged in"
-// warning. If this isn't detecting your actual login state correctly, run
-// `gakrcli auth status --json` yourself and share the output so the field
-// names here can be corrected to match exactly.
+// `gakrcli auth status --json` (documented in docs/gakrcli-subarguments.md,
+// and confirmed against a real run, which returns e.g.:
+//   { "loggedIn": true, "authMethod": "third_party", "apiProvider": "nvidia-nim" }
 
 import { execFile } from 'child_process';
 
 export interface AuthStatusResult {
   /** true = confirmed logged in, false = confirmed logged out, undefined = couldn't tell */
   loggedIn: boolean | undefined;
+  authMethod?: string;
+  apiProvider?: string;
   email?: string;
   raw?: unknown;
 }
@@ -53,7 +47,13 @@ export function checkAuthStatus(executable: string, cwd: string, timeoutMs = 800
           }
           try {
             const parsed = JSON.parse(stdout.trim()) as Record<string, unknown>;
-            done({ loggedIn: interpretAuthStatusJson(parsed), email: extractEmail(parsed), raw: parsed });
+            done({
+              loggedIn: interpretAuthStatusJson(parsed),
+              authMethod: typeof parsed.authMethod === 'string' ? parsed.authMethod : undefined,
+              apiProvider: typeof parsed.apiProvider === 'string' ? parsed.apiProvider : undefined,
+              email: extractEmail(parsed),
+              raw: parsed,
+            });
           } catch {
             done({ loggedIn: undefined });
           }

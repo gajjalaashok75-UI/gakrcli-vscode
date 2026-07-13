@@ -16,6 +16,18 @@ All notable changes to GakrCLI VS Code are documented here.
 
 ## [Unreleased]
 
+### Added (2026-07-13)
+
+- **`RefreshRuntimeMessage` + `refresh_runtime` host handler**: The header Refresh button now actually restarts the CLI process. `webview/types.ts` declares the message shape; `activate()` handles it via a shared `spawnAndResume()` helper (also used by `resume_session`). If an active conversation exists, the same session is resumed via `--resume`; otherwise it's a clean restart. This eliminates the previous no-op where clicking Refresh had no effect.
+
+### Fixed (2026-07-13)
+
+- **`mcp_refresh_status` now queries real MCP server state instead of always returning empty**: Previously the handler always sent `servers: []`, so the MCP manager UI always displayed "No MCP servers configured." It now sends a `mcp_status` control request to a running CLI process, maps the returned `McpServerStatus` shape into the webview's expected `McpServerInfo` shape (including `type: 'streamable-http'` normalization), and falls back to `[]` only when no process is running or the request fails.
+- **`mcp_add_server` no longer drops all other configured servers**: `mcp_set_servers` is a full-replace operation. The handler now fetches the current full server list via `mcp_status` first and merges the new entry into it before sending, so adding one server no longer causes every other server to be marked as removed.
+- **MCP message handlers use `ensureProcess()` instead of raw `if (processManager)` checks**: `resume_session`, `refresh_runtime`, `mcp_reconnect`, `mcp_toggle`, `mcp_remove_server`, `plugin_refresh`, and `plugin_toggle` all now await `ensureProcess()` (which spawns if needed) before writing control requests, matching the lifecycle of other host handlers and preventing silent drops when the process isn't yet running.
+
+## [Unreleased]
+
 ### Fixed (2026-07-12)
 
 - **`processManager` hoisted to module scope so `deactivate()` can kill the CLI process**: `processManager` was declared with `let` inside `activate()`, but `deactivate()` referenced it as a separate top-level function — a runtime `ReferenceError` that skipped process cleanup and left orphaned `gakrcli` child processes running after extension deactivation (e.g. on window reload or VS Code close). Hoisted to module scope so both `activate()` and `deactivate()` share the same binding.

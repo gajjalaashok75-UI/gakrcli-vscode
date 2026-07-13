@@ -56,6 +56,17 @@ export interface ResumeSessionMessage {
   sessionId: string;
 }
 
+/**
+ * User clicked the header Refresh button: stop and restart the CLI process.
+ * If a conversation is already in progress, the host resumes that same
+ * session (via --resume) rather than losing it; otherwise it's a clean
+ * restart. Was previously posted by ChatHeader.tsx but never declared here
+ * or handled on the host side — the button did nothing at all.
+ */
+export interface RefreshRuntimeMessage {
+  type: 'refresh_runtime';
+}
+
 /** User changes the AI model */
 export interface SetModelMessage {
   type: 'set_model';
@@ -257,6 +268,7 @@ export type WebviewToHostMessage =
   | ElicitationCancelMessage
   | NewConversationMessage
   | ResumeSessionMessage
+  | RefreshRuntimeMessage
   | SetModelMessage
   | SetPermissionModeMessage
   | GetContextUsageMessage
