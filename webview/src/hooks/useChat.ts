@@ -691,6 +691,11 @@ export function useChat() {
               case 'files_persisted':
                 addSystemMessage(formatFilesPersistedMessage(msgAny), `files-${Date.now()}`);
                 break;
+              case 'not_logged_in_warning':
+                if (typeof msgAny.message === 'string') {
+                  addSystemMessage(msgAny.message, `not-logged-in-${Date.now()}`);
+                }
+                break;
               // Other system events are handled by the extension host.
               default:
                 break;

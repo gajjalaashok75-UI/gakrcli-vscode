@@ -4,6 +4,18 @@ All notable changes to GakrCLI VS Code are documented here.
 
 ## [Unreleased]
 
+### Added (2026-07-13)
+
+- **`authStatusCheck.ts` — best-effort login check in `auto` provider mode**: When `selectedProvider === 'auto'`, the extension runs `<cli> auth status --json` after spawning, parses several plausible JSON field shapes defensively, and warns the user if they appear to be logged out. Returns `undefined` (inconclusive) on any ambiguity — never a false "not logged in." Non-blocking: fire-and-forget, never delays the initialize handshake. Uses the same `execFile` pattern as `cliExecutable.ts` so Windows `cmd.exe` wrapping is avoided.
+
+### Fixed (2026-07-13)
+
+- **`getProjectId()` now also strips `:` for correct Windows session folders**: After the earlier `/\` fix, paths like `C:\Users\gajja\Documents\data-science\Gakrcli` still produced `C--Users-gajja-Documents-data-science-Gakrcli` — but the documented CLI convention strips `:` as its own `-`, giving `C--Users-...`. Without the colon replacement, `path.join()` left `C:` intact as a drive separator, pointing sessions at a nested local directory instead of `~/.gakrcli/workspace/projects/`. Regex now uses `/[\\/:]/g`.
+- **`custom-title` system messages now update session names immediately**: Added `custom-title` subtype handling in `activate()`'s message handler (mirroring the existing `ai-title` branch) so a `/rename` in a terminal reflects in the sessions list without waiting for the file-watcher re-parse.
+- **`PermissionModeIndicator` shows `Permission:` label**: Added a low-opacity "Permission:" prefix span so users can disambiguate the mode chip from adjacent footer controls (provider, Fast mode) at a glance.
+
+## [Unreleased]
+
 ### Fixed (2026-07-12)
 
 - **`processManager` hoisted to module scope so `deactivate()` can kill the CLI process**: `processManager` was declared with `let` inside `activate()`, but `deactivate()` referenced it as a separate top-level function — a runtime `ReferenceError` that skipped process cleanup and left orphaned `gakrcli` child processes running after extension deactivation (e.g. on window reload or VS Code close). Hoisted to module scope so both `activate()` and `deactivate()` share the same binding.

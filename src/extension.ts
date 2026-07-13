@@ -14,6 +14,7 @@ import { TerminalManager } from './commands/terminalManager';
 import { CheckpointManager } from './checkpoint/checkpointManager';
 import type { RewindFilesResponse } from './checkpoint/checkpointManager';
 import { AuthManager } from './auth/authManager';
+import { checkAuthStatus } from './auth/authStatusCheck';
 import { SettingsSync } from './settings/settingsSync';
 import { resolveCliExecutable } from './settings/cliExecutable';
 import { McpIdeServer } from './mcp/mcpIdeServer';
@@ -339,6 +340,11 @@ export function activate(context: vscode.ExtensionContext) {
       if (msgObj.type === 'system' && msgObj.subtype === 'ai-title' && typeof msgObj.title === 'string' && typeof msgObj.session_id === 'string') {
         sessionTracker.updateSessionTitle(msgObj.session_id, msgObj.title);
       }
+      // custom-title (from /rename): same as above, so a manual rename shows
+      // up immediately instead of waiting for the file-watcher's re-parse.
+      if (msgObj.type === 'system' && msgObj.subtype === 'custom-title' && typeof msgObj.title === 'string' && typeof msgObj.session_id === 'string') {
+        sessionTracker.updateSessionTitle(msgObj.session_id, msgObj.title);
+      }
 
       // --- Checkpoint tracking (Story 10) ---
       if (msgObj.type === 'assistant' && typeof msgObj.uuid === 'string' && typeof msgObj.session_id === 'string') {
@@ -464,6 +470,40 @@ export function activate(context: vscode.ExtensionContext) {
           },
           } as never);
         output.info(`[GakrCLI] Broadcast init with ${models.length} models, permissionMode=${permMode}, account.provider=${(account as Record<string, unknown>)?.apiProvider ?? 'unknown'}`);
+
+        // Check real login status (only meaningful in 'auto' mode, where we
+        // rely on gakrcli's own login rather than extension-configured
+        // credentials). Fire-and-forget: never blocks spawning, and fails
+        // silently if the check itself is inconclusive — see
+        // src/auth/authStatusCheck.ts for why this can't be 100% certain
+        // without a confirmed example of `gakrcli auth status --json`'s
+        // real output shape.
+        if (settingsSync.selectedProvider === 'auto') {
+          checkAuthStatus(executable, workspaceFolder.uri.fsPath).then((authStatus) => {
+            if (authStatus.loggedIn === false) {
+              output.warn('[GakrCLI] Not logged in (gakrcli auth status reports logged out)');
+              vscode.window.showWarningMessage(
+                'GakrCLI is not logged in. Open a terminal, run `gakrcli`, and log in — then reload this window.',
+                'Open Terminal',
+              ).then((choice) => {
+                if (choice === 'Open Terminal') {
+                  vscode.commands.executeCommand('workbench.action.terminal.new');
+                }
+              });
+              webviewManager!.broadcast({
+                type: 'cli_output',
+                data: {
+                  type: 'system',
+                  subtype: 'not_logged_in_warning',
+                  message: 'GakrCLI is not logged in. Run `gakrcli` in a terminal and log in, then reload this panel.',
+                },
+              } as never);
+            } else if (authStatus.loggedIn === true) {
+              output.info(`[GakrCLI] Login confirmed${authStatus.email ? ` (${authStatus.email})` : ''}`);
+            }
+            // undefined: inconclusive, say nothing (see authStatusCheck.ts)
+          });
+        }
       }
       return processManager;
     } catch (err) {
