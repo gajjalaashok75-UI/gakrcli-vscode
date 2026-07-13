@@ -4,15 +4,17 @@ All notable changes to GakrCLI VS Code are documented here.
 
 ## [Unreleased]
 
-### Added (2026-07-13)
-
-- **`authStatusCheck.ts` — best-effort login check in `auto` provider mode**: When `selectedProvider === 'auto'`, the extension runs `<cli> auth status --json` after spawning, parses several plausible JSON field shapes defensively, and warns the user if they appear to be logged out. Returns `undefined` (inconclusive) on any ambiguity — never a false "not logged in." Non-blocking: fire-and-forget, never delays the initialize handshake. Uses the same `execFile` pattern as `cliExecutable.ts` so Windows `cmd.exe` wrapping is avoided.
-
 ### Fixed (2026-07-13)
 
-- **`getProjectId()` now also strips `:` for correct Windows session folders**: After the earlier `/\` fix, paths like `C:\Users\gajja\Documents\data-science\Gakrcli` still produced `C--Users-gajja-Documents-data-science-Gakrcli` — but the documented CLI convention strips `:` as its own `-`, giving `C--Users-...`. Without the colon replacement, `path.join()` left `C:` intact as a drive separator, pointing sessions at a nested local directory instead of `~/.gakrcli/workspace/projects/`. Regex now uses `/[\\/:]/g`.
-- **`custom-title` system messages now update session names immediately**: Added `custom-title` subtype handling in `activate()`'s message handler (mirroring the existing `ai-title` branch) so a `/rename` in a terminal reflects in the sessions list without waiting for the file-watcher re-parse.
-- **`PermissionModeIndicator` shows `Permission:` label**: Added a low-opacity "Permission:" prefix span so users can disambiguate the mode chip from adjacent footer controls (provider, Fast mode) at a glance.
+- **`settings_refresh` / `get_context_usage` host handlers now fetch real model/effort/context-usage data**: Added `sendSettingsState()` which queries the CLI's `get_settings` and `get_context_usage` control requests and broadcasts the result as a `settings_state` message. Previously both message types had NO handler on the host side, so the context-usage indicator in the webview stayed in its permanent "pending" placeholder state.
+
+- **`DiffManager` auto-approves file edits in `acceptEdits`/`bypassPermissions`/`dontAsk` modes**: The `DiffManager` now accepts an optional `getPermissionMode` callback. When the mode is `acceptEdits`, `bypassPermissions`, or `dontAsk`, edits are applied directly to disk and approved without opening the interactive diff viewer. Previously these permission modes had zero effect on actual file edit/write tool calls — every single one still required manually clicking Accept in a VS Code diff tab, making these modes appear broken.
+
+- **Webview streaming state now stays alive while tool calls are pending**: The CLI sends complete `assistant` message objects (not incremental stream deltas) in production. The webview's `useChat` hook now tracks `tool_use` blocks inside these messages and keeps `isStreaming` active while any tool calls remain unresolved. Previously only the (dead, in practice) streaming code path populated `activeToolUseIdsRef`, so the spinner was cleared after the first message chunk (e.g. a thinking block), even when that same message contained pending tool calls.
+
+### Added (2026-07-13)
+
+- **`SettingsRefreshMessage` type added to `WebviewToHostMessage` union**: Declared the `settings_refresh` message type so the webview can type-check its post-message payload when requesting a settings/context-usage refresh after each completed turn.
 
 ## [Unreleased]
 

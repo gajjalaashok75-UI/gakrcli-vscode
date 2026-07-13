@@ -84,6 +84,17 @@ export interface GetContextUsageMessage {
   type: 'get_context_usage';
 }
 
+/**
+ * Sent by the webview after every completed turn to ask the host to
+ * re-fetch model/effort/context-usage state and report it back as
+ * 'settings_state'. Was previously posted with no corresponding type
+ * declaration or host-side handler at all — the entire refresh pipeline
+ * behind the context-usage indicator was dead.
+ */
+export interface SettingsRefreshMessage {
+  type: 'settings_refresh';
+}
+
 /** User copies text to clipboard */
 export interface CopyToClipboardMessage {
   type: 'copy_to_clipboard';
@@ -272,6 +283,7 @@ export type WebviewToHostMessage =
   | SetModelMessage
   | SetPermissionModeMessage
   | GetContextUsageMessage
+  | SettingsRefreshMessage
   | CopyToClipboardMessage
   | CopyMessageMessage
   | OpenFileMessage

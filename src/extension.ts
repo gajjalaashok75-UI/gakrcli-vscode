@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
     createDiffContentProviders();
   context.subscriptions.push(...diffProviderDisposables);
 
-  const diffManager = new DiffManager(original, proposed, output);
+  const diffManager = new DiffManager(original, proposed, output, () => permissionHandler.getMode());
   context.subscriptions.push(diffManager);
   diffManagerInstance = diffManager;
 
@@ -955,6 +955,54 @@ export function activate(context: vscode.ExtensionContext) {
       currentModel: current.model,
       currentBaseUrl: settingsSync.baseUrl,
     } as never);
+  });
+
+  // Fetches model/effort (get_settings) and real context-window usage
+  // (get_context_usage) from the CLI and reports them back as a
+  // 'settings_state' broadcast — the shape the webview already knows how to
+  // read (see useChat.ts's `data.type === 'settings_state'` handler). Both
+  // 'settings_refresh' (sent by the webview after every completed turn) and
+  // 'get_context_usage' (declared in the message types but never wired to
+  // anything) previously had NO handler at all on the host side, so the
+  // context-usage indicator never received real data and stayed in its
+  // permanent "pending" placeholder state.
+  const sendSettingsState = async (panelId: string | undefined) => {
+    if (!processManager) return;
+    let current: Record<string, unknown> = {};
+    let contextUsage: Record<string, unknown> | undefined;
+    try {
+      const settingsResponse = await processManager.sendControlRequest({ subtype: 'get_settings' });
+      const applied = (settingsResponse as Record<string, unknown> | undefined)?.applied as
+        | { model?: string; effort?: string }
+        | undefined;
+      if (applied) {
+        current = { model: applied.model, effort: applied.effort };
+      }
+    } catch (err) {
+      output.warn(`[GakrCLI] get_settings failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    try {
+      const usageResponse = await processManager.sendControlRequest({ subtype: 'get_context_usage' });
+      if (usageResponse) {
+        contextUsage = usageResponse;
+      }
+    } catch (err) {
+      output.warn(`[GakrCLI] get_context_usage failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    const payload = { type: 'settings_state', current, runtime: {}, contextUsage } as never;
+    if (panelId) {
+      webviewManager!.sendToPanel(panelId, payload);
+    } else {
+      webviewManager!.broadcast(payload);
+    }
+  };
+
+  webviewManager.onMessage('settings_refresh', async (_message, panelId) => {
+    await sendSettingsState(panelId);
+  });
+
+  webviewManager.onMessage('get_context_usage', async (_message, panelId) => {
+    await sendSettingsState(panelId);
   });
 
   webviewManager.onMessage('set_provider', async (message) => {
