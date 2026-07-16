@@ -2,6 +2,12 @@
 
 All notable changes to GakrCLI VS Code are documented here.
 
+## [1.0.0] - 2026-07-16
+
+### Fixed (2026-07-16)
+
+- **Permission mode indicator simplified**: Removed "Permission:" label text from the webview composer footer indicator. Now shows `[shield icon] [mode name]` instead of `[shield icon] Permission: [mode name]` for a cleaner, more compact UI.
+
 ## [1.0.0] - 2026-07-15
 
 ### Fixed (2026-07-15)
